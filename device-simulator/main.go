@@ -11,9 +11,17 @@ import (
 
 type Telemetry struct {
 	DeviceID    string `json:"deviceId"`
+	DeviceType  string `json:"deviceType"`
+	Location    string `json:"location"`
 	CPU         int    `json:"cpu"`
 	Memory      int    `json:"memory"`
 	Temperature int    `json:"temperature"`
+}
+
+type Device struct {
+	ID       string
+	Type     string
+	Location string
 }
 
 func main() {
@@ -34,16 +42,37 @@ func main() {
 
 	fmt.Println("Connected to MQTT Broker")
 
-	devices := []string{
-		"AP-101",
-		"AP-102",
-		"SW-201",
-		"RTR-301",
+	devices := []Device{
+		{
+			ID:       "AP-101",
+			Type:     "Access Point",
+			Location: "Building A",
+		},
+		{
+			ID:       "AP-102",
+			Type:     "Access Point",
+			Location: "Building B",
+		},
+		{
+			ID:       "SW-201",
+			Type:     "Switch",
+			Location: "Floor 1",
+		},
+		{
+			ID:       "RTR-301",
+			Type:     "Router",
+			Location: "Datacenter",
+		},
 	}
+
 	for {
-		deviceID := devices[rand.Intn(len(devices))]
+
+		device := devices[rand.Intn(len(devices))]
+
 		telemetry := Telemetry{
-			DeviceID:    deviceID,
+			DeviceID:    device.ID,
+			DeviceType:  device.Type,
+			Location:    device.Location,
 			CPU:         rand.Intn(100),
 			Memory:      rand.Intn(100),
 			Temperature: rand.Intn(40) + 30,
