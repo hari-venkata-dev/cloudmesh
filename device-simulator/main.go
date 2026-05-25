@@ -1,12 +1,20 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"math/rand"
 	"time"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 )
+
+type Telemetry struct {
+	DeviceID    string `json:"deviceId"`
+	CPU         int    `json:"cpu"`
+	Memory      int    `json:"memory"`
+	Temperature int    `json:"temperature"`
+}
 
 func main() {
 
@@ -30,25 +38,26 @@ func main() {
 
 	for {
 
-		cpuUsage := rand.Intn(100)
-		memoryUsage := rand.Intn(100)
-		temperature := rand.Intn(40) + 30
+		telemetry := Telemetry{
+			DeviceID:    deviceID,
+			CPU:         rand.Intn(100),
+			Memory:      rand.Intn(100),
+			Temperature: rand.Intn(40) + 30,
+		}
 
-		telemetry := fmt.Sprintf(
-			"Device: %s | CPU: %d%% | Memory: %d%% | Temperature: %d°C",
-			deviceID,
-			cpuUsage,
-			memoryUsage,
-			temperature,
-		)
+		jsonData, err := json.Marshal(telemetry)
 
-		fmt.Println(telemetry)
+		if err != nil {
+			panic(err)
+		}
+
+		fmt.Println(string(jsonData))
 
 		token = client.Publish(
 			"devices/telemetry",
 			0,
 			false,
-			telemetry,
+			jsonData,
 		)
 
 		token.Wait()
