@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"time"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 )
@@ -13,6 +14,8 @@ type Telemetry struct {
 	Memory      int    `json:"memory"`
 	Temperature int    `json:"temperature"`
 }
+
+var deviceLastSeen = make(map[string]time.Time)
 
 func messageHandler(client mqtt.Client, msg mqtt.Message) {
 
@@ -25,6 +28,7 @@ func messageHandler(client mqtt.Client, msg mqtt.Message) {
 		return
 	}
 
+	deviceLastSeen[telemetry.DeviceID] = time.Now()
 	fmt.Println("Telemetry Received")
 
 	fmt.Printf("Device ID: %s\n", telemetry.DeviceID)
@@ -33,6 +37,10 @@ func messageHandler(client mqtt.Client, msg mqtt.Message) {
 	fmt.Printf("Temperature: %d°C\n", telemetry.Temperature)
 
 	fmt.Println("--------------------------------")
+	fmt.Printf(
+		"Last Seen: %s\n",
+		deviceLastSeen[telemetry.DeviceID].Format(time.RFC3339),
+	)
 	if telemetry.CPU > 80 {
 		fmt.Println("HIGH CPU ALERT")
 		fmt.Printf(
