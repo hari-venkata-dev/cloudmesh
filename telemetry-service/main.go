@@ -1,18 +1,38 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 )
 
+type Telemetry struct {
+	DeviceID    string `json:"deviceId"`
+	CPU         int    `json:"cpu"`
+	Memory      int    `json:"memory"`
+	Temperature int    `json:"temperature"`
+}
+
 func messageHandler(client mqtt.Client, msg mqtt.Message) {
 
-	fmt.Printf(
-		"Received telemetry -> Topic: %s | Message: %s\n",
-		msg.Topic(),
-		msg.Payload(),
-	)
+	var telemetry Telemetry
+
+	err := json.Unmarshal(msg.Payload(), &telemetry)
+
+	if err != nil {
+		fmt.Println("Failed to parse telemetry:", err)
+		return
+	}
+
+	fmt.Println("Telemetry Received")
+
+	fmt.Printf("Device ID: %s\n", telemetry.DeviceID)
+	fmt.Printf("CPU Usage: %d%%\n", telemetry.CPU)
+	fmt.Printf("Memory Usage: %d%%\n", telemetry.Memory)
+	fmt.Printf("Temperature: %d°C\n", telemetry.Temperature)
+
+	fmt.Println("--------------------------------")
 }
 
 func main() {
