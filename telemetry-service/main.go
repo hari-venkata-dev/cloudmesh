@@ -33,6 +33,16 @@ func messageHandler(client mqtt.Client, msg mqtt.Message) {
 	fmt.Printf("Temperature: %d°C\n", telemetry.Temperature)
 
 	fmt.Println("--------------------------------")
+	if telemetry.CPU > 80 {
+		fmt.Println("HIGH CPU ALERT")
+		fmt.Printf(
+			"Device %s CPU usage is critically high: %d%%\n",
+			telemetry.DeviceID,
+			telemetry.CPU,
+		)
+
+		fmt.Println("********************************")
+	}
 }
 
 func main() {
