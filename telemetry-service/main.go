@@ -53,6 +53,31 @@ func messageHandler(client mqtt.Client, msg mqtt.Message) {
 	}
 }
 
+func monitorOfflineDevices() {
+
+	for {
+
+		for deviceID, lastSeen := range deviceLastSeen {
+
+			timeSinceLastSeen := time.Since(lastSeen)
+
+			if timeSinceLastSeen > 15*time.Second {
+
+				fmt.Println("DEVICE OFFLINE ALERT")
+				fmt.Printf(
+					"Device %s has not sent telemetry for %v\n",
+					deviceID,
+					timeSinceLastSeen,
+				)
+
+				fmt.Println("################################")
+			}
+		}
+
+		time.Sleep(5 * time.Second)
+	}
+}
+
 func main() {
 
 	fmt.Println("CloudMesh Telemetry Service Started")
@@ -86,6 +111,7 @@ func main() {
 	}
 
 	fmt.Println("Subscribed to devices/telemetry")
+	go monitorOfflineDevices()
 
 	select {}
 }
