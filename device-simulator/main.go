@@ -34,10 +34,14 @@ func main() {
 
 	fmt.Println("Connected to MQTT Broker")
 
-	deviceID := "AP-101"
-
+	devices := []string{
+		"AP-101",
+		"AP-102",
+		"SW-201",
+		"RTR-301",
+	}
 	for {
-
+		deviceID := devices[rand.Intn(len(devices))]
 		telemetry := Telemetry{
 			DeviceID:    deviceID,
 			CPU:         rand.Intn(100),
