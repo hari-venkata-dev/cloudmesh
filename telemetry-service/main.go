@@ -10,12 +10,20 @@ import (
 
 type Telemetry struct {
 	DeviceID    string `json:"deviceId"`
+	DeviceType  string `json:"deviceType"`
+	Location    string `json:"location"`
 	CPU         int    `json:"cpu"`
 	Memory      int    `json:"memory"`
 	Temperature int    `json:"temperature"`
 }
+type Device struct {
+	ID       string
+	Type     string
+	Location string
+}
 
 var deviceLastSeen = make(map[string]time.Time)
+var deviceStatus = make(map[string]string)
 
 func messageHandler(client mqtt.Client, msg mqtt.Message) {
 
@@ -29,9 +37,12 @@ func messageHandler(client mqtt.Client, msg mqtt.Message) {
 	}
 
 	deviceLastSeen[telemetry.DeviceID] = time.Now()
+	deviceStatus[telemetry.DeviceID] = "ONLINE"
 	fmt.Println("Telemetry Received")
 
 	fmt.Printf("Device ID: %s\n", telemetry.DeviceID)
+	fmt.Printf("Device Type: %s\n", telemetry.DeviceType)
+	fmt.Printf("Location: %s\n", telemetry.Location)
 	fmt.Printf("CPU Usage: %d%%\n", telemetry.CPU)
 	fmt.Printf("Memory Usage: %d%%\n", telemetry.Memory)
 	fmt.Printf("Temperature: %d°C\n", telemetry.Temperature)
@@ -63,14 +74,19 @@ func monitorOfflineDevices() {
 
 			if timeSinceLastSeen > 15*time.Second {
 
-				fmt.Println("DEVICE OFFLINE ALERT")
-				fmt.Printf(
-					"Device %s has not sent telemetry for %v\n",
-					deviceID,
-					timeSinceLastSeen,
-				)
+				if deviceStatus[deviceID] != "OFFLINE" {
 
-				fmt.Println("################################")
+					deviceStatus[deviceID] = "OFFLINE"
+
+					fmt.Println("DEVICE OFFLINE ALERT")
+
+					fmt.Printf(
+						"Device %s is now OFFLINE\n",
+						deviceID,
+					)
+
+					fmt.Println("################################")
+				}
 			}
 		}
 
