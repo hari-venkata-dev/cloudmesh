@@ -37,6 +37,20 @@ func messageHandler(client mqtt.Client, msg mqtt.Message) {
 	}
 
 	deviceLastSeen[telemetry.DeviceID] = time.Now()
+	currentStatus := deviceStatus[telemetry.DeviceID]
+
+	if currentStatus == "OFFLINE" {
+
+		fmt.Println("DEVICE RECOVERED")
+
+		fmt.Printf(
+			"Device %s is back ONLINE\n",
+			telemetry.DeviceID,
+		)
+
+		fmt.Println("++++++++++++++++++++++++++++++++")
+	}
+
 	deviceStatus[telemetry.DeviceID] = "ONLINE"
 	fmt.Println("Telemetry Received")
 
