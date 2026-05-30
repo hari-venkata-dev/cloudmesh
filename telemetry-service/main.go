@@ -1,11 +1,14 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"time"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
+
+	_ "modernc.org/sqlite"
 )
 
 type Telemetry struct {
@@ -24,6 +27,39 @@ type Device struct {
 
 var deviceLastSeen = make(map[string]time.Time)
 var deviceStatus = make(map[string]string)
+var db *sql.DB
+
+func saveTelemetry(telemetry Telemetry) {
+
+	query := `
+	INSERT INTO telemetry (
+		device_id,
+		device_type,
+		location,
+		cpu,
+		memory,
+		temperature
+	)
+	VALUES (?, ?, ?, ?, ?, ?)
+	`
+
+	_, err := db.Exec(
+		query,
+		telemetry.DeviceID,
+		telemetry.DeviceType,
+		telemetry.Location,
+		telemetry.CPU,
+		telemetry.Memory,
+		telemetry.Temperature,
+	)
+
+	if err != nil {
+		fmt.Println("Failed to save telemetry:", err)
+		return
+	}
+
+	fmt.Println("Telemetry saved to database")
+}
 
 func messageHandler(client mqtt.Client, msg mqtt.Message) {
 
@@ -52,6 +88,7 @@ func messageHandler(client mqtt.Client, msg mqtt.Message) {
 	}
 
 	deviceStatus[telemetry.DeviceID] = "ONLINE"
+	saveTelemetry(telemetry)
 	fmt.Println("Telemetry Received")
 
 	fmt.Printf("Device ID: %s\n", telemetry.DeviceID)
@@ -107,10 +144,42 @@ func monitorOfflineDevices() {
 		time.Sleep(5 * time.Second)
 	}
 }
+func createTelemetryTable() {
 
+	query := `
+	CREATE TABLE IF NOT EXISTS telemetry (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		device_id TEXT,
+		device_type TEXT,
+		location TEXT,
+		cpu INTEGER,
+		memory INTEGER,
+		temperature INTEGER,
+		timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+	);
+	`
+
+	_, err := db.Exec(query)
+
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println("Telemetry table ready")
+}
 func main() {
 
 	fmt.Println("CloudMesh Telemetry Service Started")
+	var err error
+
+	db, err = sql.Open("sqlite", "cloudmesh.db")
+
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println("Connected to SQLite Database")
+	createTelemetryTable()
 
 	opts := mqtt.NewClientOptions()
 
