@@ -167,6 +167,66 @@ func createTelemetryTable() {
 
 	fmt.Println("Telemetry table ready")
 }
+
+func showRecentTelemetry() {
+
+	rows, err := db.Query(`
+		SELECT
+			device_id,
+			device_type,
+			location,
+			cpu,
+			memory,
+			temperature
+		FROM telemetry
+		ORDER BY id DESC
+		LIMIT 5
+	`)
+
+	if err != nil {
+		fmt.Println("Query failed:", err)
+		return
+	}
+
+	defer rows.Close()
+
+	fmt.Println("===== RECENT TELEMETRY =====")
+
+	for rows.Next() {
+
+		var deviceID string
+		var deviceType string
+		var location string
+		var cpu int
+		var memory int
+		var temperature int
+
+		err := rows.Scan(
+			&deviceID,
+			&deviceType,
+			&location,
+			&cpu,
+			&memory,
+			&temperature,
+		)
+
+		if err != nil {
+			fmt.Println(err)
+			continue
+		}
+
+		fmt.Printf(
+			"%s | %s | %s | CPU:%d%% | MEM:%d%% | TEMP:%d°C\n",
+			deviceID,
+			deviceType,
+			location,
+			cpu,
+			memory,
+			temperature,
+		)
+	}
+}
+
 func main() {
 
 	fmt.Println("CloudMesh Telemetry Service Started")
@@ -210,6 +270,7 @@ func main() {
 	}
 
 	fmt.Println("Subscribed to devices/telemetry")
+	showRecentTelemetry()
 	go monitorOfflineDevices()
 
 	select {}
